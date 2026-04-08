@@ -12,6 +12,7 @@ export function Navbar() {
 
   const navLinks = [
     { to: '/', label: 'Trang chủ' },
+    { to: '/vehicles', label: 'Xe điện' },
     { to: '/map', label: 'Bản đồ trạm' },
   ]
 

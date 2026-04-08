@@ -18,6 +18,7 @@ import VehiclesPage from '@/pages/admin/VehiclesPage'
 import StationsPage from '@/pages/admin/StationsPage'
 import UsersPage from '@/pages/admin/UsersPage'
 import SubscriptionsPage from '@/pages/admin/SubscriptionsPage'
+import VehiclesListPage from './pages/client/VehiclesListPage'
 
 
 interface ProtectedRouteProps {
@@ -52,6 +53,7 @@ export default function App() {
         <Route element={<ClientLayout />}>
           <Route path="/" element={<HomePage />} />
           <Route path="/map" element={<MapPage />} />
+          <Route path="/vehicles" element={<VehiclesListPage />} />
           
           {/* Cần đăng nhập mới vào được */}
           <Route path="/rent/:vehicleId" element={<ProtectedRoute><RentPage /></ProtectedRoute>} />
