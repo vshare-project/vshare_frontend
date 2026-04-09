@@ -1,13 +1,26 @@
 import api from './axios'
+import type { Station, StationPaginationResponse } from '@/types/station.types'
+
+export interface GetStationsParams {
+  page?: number
+  limit?: number
+  keyword?: string
+}
 
 export const stationApi = {
-  getAll: () => api.get('/stations'),
+  getAll: (params?: GetStationsParams) => 
+    api.get<StationPaginationResponse>('/station', { params }),
 
-  getById: (id: string) => api.get(`/stations/${id}`),
+  getById: (id: number | string) => 
+    api.get<{ status: string; data: Station }>(`/station/${id}`),
 
-  create: (data: unknown) => api.post('/stations', data),
+  // API thêm và sửa yêu cầu FormData vì có upload.array('images', 5)
+  create: (data: FormData) => 
+    api.post('/station', data, { headers: { 'Content-Type': 'multipart/form-data' } }),
 
-  update: (id: string, data: unknown) => api.put(`/stations/${id}`, data),
+  update: (id: number | string, data: FormData) => 
+    api.patch(`/station/${id}`, data, { headers: { 'Content-Type': 'multipart/form-data' } }),
 
-  delete: (id: string) => api.delete(`/stations/${id}`),
+  delete: (id: number | string) => 
+    api.delete(`/station/${id}`),
 }

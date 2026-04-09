@@ -1,11 +1,32 @@
+export type StationType = 'public' | 'university' | 'commercial' | 'residential'
+
 export interface Station {
-  id: string
-  name: string
+  id: number
+  stationName: string
   address: string
-  lat: number
-  lng: number
+  latitude: number
+  longitude: number
   totalSlots: number
-  availableVehicles: number
-  imageUrl?: string
-  district: string
+  availableSlots: number // Số lượng chỗ còn trống
+  isActive: boolean
+  stationType: StationType
+  imageUrls?: string[]
+  openTime?: string
+  closeTime?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface StationPaginationResponse {
+  status: string
+  message: string
+  data: {
+    data: Station[]
+    meta: {
+      page: number
+      limit: number
+      total: number
+      totalPages: number
+    }
+  }
 }
