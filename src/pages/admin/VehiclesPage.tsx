@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Search, Plus, Battery, Edit, Trash2, Bike, Car, ChevronLeft, ChevronRight, RefreshCw, Wifi, WifiOff, AlertTriangle, X, Check } from 'lucide-react'
+import { Search, Plus, Battery, Edit, Trash2, Bike, Car, ChevronLeft, ChevronRight, RefreshCw, Wifi, WifiOff, AlertTriangle, X } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
 import { vehicleApi } from '@/api/vehicle.api'
+import { VehicleModal } from '@/components/shared/VehicleModal' // Import Modal
 import type { Vehicle, VehicleType, VehicleStatus } from '@/types/vehicle.types'
 import { toast } from 'sonner'
 
@@ -12,21 +13,20 @@ import { toast } from 'sonner'
 
 const STATUS_MAP: Record<VehicleStatus, { label: string; variant: 'success' | 'info' | 'warning' | 'danger' | 'default' }> = {
   available: { label: 'Sẵn sàng', variant: 'success' },
-  rented: { label: 'Đang thuê', variant: 'info' },
+  in_use: { label: 'Đang thuê', variant: 'info' }, 
   charging: { label: 'Đang sạc', variant: 'warning' },
   maintenance: { label: 'Bảo trì', variant: 'danger' },
   low_battery: { label: 'Pin yếu', variant: 'warning' },
-  out_of_service: { label: 'Ngừng HĐ', variant: 'danger' },
+  out_of_service: { label: 'Ngừng HĐ', variant: 'danger' }, // Dòng được thêm vào
 }
 
 const STATUS_FILTERS: { value: string; label: string }[] = [
   { value: '', label: 'Tất cả' },
   { value: 'available', label: 'Sẵn sàng' },
-  { value: 'rented', label: 'Đang thuê' },
+  { value: 'in_use', label: 'Đang thuê' },
   { value: 'charging', label: 'Đang sạc' },
   { value: 'maintenance', label: 'Bảo trì' },
   { value: 'low_battery', label: 'Pin yếu' },
-  { value: 'out_of_service', label: 'Ngừng HĐ' },
 ]
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -45,9 +45,7 @@ function BatteryBar({ level }: { level: number }) {
 }
 
 function VehicleTypeIcon({ type }: { type: VehicleType }) {
-  return type === 'car'
-    ? <Car className="w-3.5 h-3.5" />
-    : <Bike className="w-3.5 h-3.5" />
+  return type === 'car' ? <Car className="w-3.5 h-3.5" /> : <Bike className="w-3.5 h-3.5" />
 }
 
 function Pagination({
@@ -62,11 +60,8 @@ function Pagination({
         Hiển thị <span className="font-medium text-gray-600">{from}–{to}</span> / {total} xe
       </span>
       <div className="flex items-center gap-1">
-        <button
-          onClick={() => onPageChange(page - 1)}
-          disabled={page <= 1}
-          className="p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed text-gray-500 transition-colors"
-        >
+        <button onClick={() => onPageChange(page - 1)} disabled={page <= 1}
+          className="p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed text-gray-500 transition-colors">
           <ChevronLeft className="w-4 h-4" />
         </button>
 
@@ -78,18 +73,14 @@ function Pagination({
           else p = page - 2 + i
           return (
             <button key={p} onClick={() => onPageChange(p)}
-              className={`w-7 h-7 rounded-lg text-xs font-medium transition-colors ${p === page ? 'bg-brand-600 text-white' : 'hover:bg-gray-100 text-gray-500'
-                }`}>
+              className={`w-7 h-7 rounded-lg text-xs font-medium transition-colors ${p === page ? 'bg-brand-600 text-white' : 'hover:bg-gray-100 text-gray-500'}`}>
               {p}
             </button>
           )
         })}
 
-        <button
-          onClick={() => onPageChange(page + 1)}
-          disabled={page >= totalPages}
-          className="p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed text-gray-500 transition-colors"
-        >
+        <button onClick={() => onPageChange(page + 1)} disabled={page >= totalPages}
+          className="p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed text-gray-500 transition-colors">
           <ChevronRight className="w-4 h-4" />
         </button>
       </div>
@@ -173,66 +164,45 @@ function VehicleTable({
               )
               : vehicles.map(v => {
                 const s = STATUS_MAP[v.status as VehicleStatus] || { label: v.status, variant: 'default' as const }
-                const details = v.vehicleType === 'motorbike' ? v.motorbikeDetails : v.carDetails
-                const range = v.rangeKm ? `${parseFloat(v.rangeKm)}km` : '—'
+                const range = v.rangeKm ? `${parseFloat(v.rangeKm.toString())}km` : '—'
 
                 return (
                   <tr key={v.id} className="hover:bg-gray-50/70 transition-colors group">
-                    {/* Mã xe */}
                     <td className="px-5 py-3">
                       <span className="font-mono text-xs font-semibold text-gray-700 bg-gray-100 px-2 py-0.5 rounded-md">
                         {v.vehicleCode}
                       </span>
                     </td>
-
-                    {/* Loại xe */}
                     <td className="px-5 py-3">
-                      <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium border ${v.vehicleType === 'car'
-                          ? 'bg-blue-50 text-blue-700 border-blue-100'
-                          : 'bg-green-50 text-green-700 border-green-100'
-                        }`}>
+                      <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium border ${v.vehicleType === 'car' ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-green-50 text-green-700 border-green-100'}`}>
                         <VehicleTypeIcon type={v.vehicleType} />
                         {v.vehicleType === 'car' ? 'Ô tô' : 'Xe máy'}
                       </div>
                     </td>
-
-                    {/* Hãng / Model */}
                     <td className="px-5 py-3">
                       <div>
                         <p className="font-semibold text-gray-800 text-xs">{v.brand}</p>
-                        <p className="text-gray-400 text-xs">{v.model} · {v.year} · {v.color}</p>
+                        <p className="text-gray-400 text-xs">{v.model} {v.year ? `· ${v.year}` : ''} {v.color ? `· ${v.color}` : ''}</p>
                       </div>
                     </td>
-
-                    {/* Biển số */}
                     <td className="px-5 py-3">
-                      <span className="font-mono text-xs text-gray-600">{v.licensePlate}</span>
+                      <span className="font-mono text-xs text-gray-600">{v.licensePlate || '—'}</span>
                     </td>
-
-                    {/* Trạm */}
                     <td className="px-5 py-3">
                       {v.station
                         ? <span className="text-xs text-gray-600 max-w-[120px] block truncate" title={v.station.stationName}>{v.station.stationName}</span>
                         : <span className="text-xs text-gray-300 italic">Chưa gán</span>
                       }
                     </td>
-
-                    {/* Pin */}
                     <td className="px-5 py-3">
                       <BatteryBar level={v.batteryLevel} />
                     </td>
-
-                    {/* Tầm hoạt động */}
                     <td className="px-5 py-3">
                       <span className="text-xs text-gray-500 font-mono">{range}</span>
                     </td>
-
-                    {/* Trạng thái */}
                     <td className="px-5 py-3">
                       <Badge variant={s.variant}>{s.label}</Badge>
                     </td>
-
-                    {/* Actions */}
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button onClick={() => onEdit(v)}
@@ -269,10 +239,16 @@ export default function VehiclesPage() {
   const [meta, setMeta] = useState({ page: 1, limit: LIMIT, total: 0, totalPages: 1 })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  
+  // State Xóa
   const [deleteTarget, setDeleteTarget] = useState<Vehicle | null>(null)
   const [deleting, setDeleting] = useState(false)
 
-  // Phân tách xe theo loại để hiển thị số lượng trên tab
+  // State Thêm / Sửa
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [editTarget, setEditTarget] = useState<Vehicle | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
+
   const carCount = vehicles.filter(v => v.vehicleType === 'car').length
   const motorbikeCount = vehicles.filter(v => v.vehicleType === 'motorbike').length
 
@@ -281,14 +257,22 @@ export default function VehiclesPage() {
     setError(null)
     try {
       const keyword = [
-        search,
+        search.trim(),
         filterStatus,
         activeTab !== 'all' ? activeTab : ''
       ].filter(Boolean).join(' ') || undefined
 
       const res = await vehicleApi.getAll({ page, limit: LIMIT, keyword })
-      setVehicles(res.data.data)
-      setMeta(res.data.meta)
+      
+      const apiResponse = res.data as any; // Đọc cấu trúc phẳng của BE
+
+      setVehicles(apiResponse.data || [])
+      setMeta({
+        page: Number(apiResponse.page) || 1,
+        limit: Number(apiResponse.limit) || LIMIT,
+        total: Number(apiResponse.total) || 0,
+        totalPages: Math.ceil((Number(apiResponse.total) || 0) / LIMIT) || 1
+      })
     } catch (err: unknown) {
       const e = err as { response?: { data?: { message?: string } } }
       setError(e.response?.data?.message || 'Không thể kết nối đến server')
@@ -301,19 +285,38 @@ export default function VehiclesPage() {
     fetchVehicles()
   }, [fetchVehicles])
 
-  // Reset page khi đổi filter
   useEffect(() => { setPage(1) }, [search, filterStatus, activeTab])
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    setSearch(searchInput)
+    setSearch(searchInput.trim())
+  }
+
+  // Handle lưu Xe (Thêm/Sửa)
+  const handleSaveVehicle = async (formData: FormData) => {
+    setIsSaving(true)
+    try {
+      if (editTarget) {
+        await vehicleApi.update(editTarget.id.toString(), formData)
+        toast.success('Cập nhật thông tin xe thành công')
+      } else {
+        await vehicleApi.create(formData)
+        toast.success('Thêm xe mới thành công')
+      }
+      setIsModalOpen(false)
+      fetchVehicles()
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Có lỗi xảy ra khi lưu xe')
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   const handleDelete = async () => {
     if (!deleteTarget) return
     setDeleting(true)
     try {
-      await vehicleApi.delete(deleteTarget.id)
+      await vehicleApi.delete(deleteTarget.id.toString())
       toast.success(`Đã xóa xe ${deleteTarget.vehicleCode}`)
       setDeleteTarget(null)
       fetchVehicles()
@@ -324,7 +327,6 @@ export default function VehiclesPage() {
     }
   }
 
-  // Lọc client-side theo tab loại xe (vì API tìm bằng keyword chung)
   const displayedVehicles = activeTab === 'all'
     ? vehicles
     : vehicles.filter(v => v.vehicleType === activeTab)
@@ -350,13 +352,13 @@ export default function VehiclesPage() {
             className="p-2 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-40">
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </button>
-          <Button className="gap-2">
+          {/* NÚT THÊM XE */}
+          <Button className="gap-2" onClick={() => { setEditTarget(null); setIsModalOpen(true) }}>
             <Plus className="w-4 h-4" /> Thêm xe
           </Button>
         </div>
       </div>
 
-      {/* Error banner */}
       {error && (
         <div className="flex items-center gap-3 p-4 rounded-xl bg-red-50 border border-red-100 text-red-600 text-sm">
           <AlertTriangle className="w-4 h-4 shrink-0" />
@@ -365,7 +367,7 @@ export default function VehiclesPage() {
         </div>
       )}
 
-      {/* Tabs loại xe */}
+      {/* Tabs */}
       <div className="flex gap-2 border-b border-gray-100 pb-0">
         {tabs.map(tab => (
           <button key={tab.key} onClick={() => setActiveTab(tab.key)}
@@ -388,7 +390,7 @@ export default function VehiclesPage() {
         <form onSubmit={handleSearchSubmit} className="flex gap-2 flex-1 min-w-64">
           <div className="flex-1">
             <Input
-              placeholder="Tìm mã xe, loại xe, trạng thái..."
+              placeholder="Tìm mã xe, hãng, trạng thái..."
               leftIcon={<Search className="w-4 h-4" />}
               value={searchInput}
               onChange={e => setSearchInput(e.target.value)}
@@ -425,7 +427,7 @@ export default function VehiclesPage() {
           <VehicleTable
             vehicles={displayedVehicles}
             loading={loading}
-            onEdit={(v) => toast.info(`Sắp ra: Edit ${v.vehicleCode}`)}
+            onEdit={(v) => { setEditTarget(v); setIsModalOpen(true) }} // Mở modal sửa
             onDelete={(v) => setDeleteTarget(v)}
           />
           {!loading && meta.totalPages > 1 && (
@@ -440,7 +442,16 @@ export default function VehiclesPage() {
         </CardContent>
       </Card>
 
-      {/* Delete Modal */}
+      {/* MODAL THÊM / SỬA */}
+      <VehicleModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSave={handleSaveVehicle}
+        initialData={editTarget}
+        loading={isSaving}
+      />
+
+      {/* MODAL XÓA */}
       {deleteTarget && (
         <DeleteConfirmModal
           vehicle={deleteTarget}

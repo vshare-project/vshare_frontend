@@ -249,13 +249,13 @@ function VehicleCard({ vehicle, onRent }: { vehicle: Vehicle; onRent: (v: Vehicl
                       </div>
                       <div className="flex items-center gap-1.5 text-gray-600">
                         <Star className="w-3.5 h-3.5 text-gray-400" />
-                        <span>{car.seats} chỗ ngồi</span>
+                        <span>{car.capacity} chỗ ngồi</span>
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-1.5">
-                      <FeatureIcon has={car.hasAC}        label="Điều hoà" />
+                      <FeatureIcon has={car.hasAirConditioning}        label="Điều hoà" />
                       <FeatureIcon has={car.hasGPS}       label="GPS" />
-                      <FeatureIcon has={car.hasBluetooth} label="Bluetooth" />
+                      <FeatureIcon has={car.hasBackupCamera} label="Camera dự phòng" />
                     </div>
                     {car.features?.length > 0 && (
                       <div className="flex flex-wrap gap-1">
